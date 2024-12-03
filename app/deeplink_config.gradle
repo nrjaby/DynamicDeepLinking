@@ -1,0 +1,60 @@
+import java.util.regex.Pattern
+
+apply from: 'urls.gradle'
+
+ext.generateData = { listOfDeepLinkUrls, locales, urlList ->
+    String links = ""
+    listOfDeepLinkUrls.each{ item ->
+        locales.each{ locale ->
+            urlList.each { domain ->
+                links += https("/"+locale.replace("_","-")+item,domain)
+            }
+        }
+    }
+    print(links)
+    return links
+}
+
+static def https(String path, String host) {
+    return "\n" +
+            "               <data\n" +
+            "                   android:host=\"$host\"\n" +
+            "                   android:pathPrefix=\"$path\"\n" +
+            "                   android:scheme=\"https\"/>\n"
+}
+
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        output.processManifest.doLast {
+            def placeholders = variant.mergedFlavor.manifestPlaceholders;
+            if (placeholders == null || placeholders.isEmpty()) {
+                return
+            }
+
+            def buildType = "${variant.getFlavorName()}${variant.buildType.name.capitalize()}"
+            String manifestDir = "build/intermediates/merged_manifests/$buildType"
+            String manifestFilePath = "$manifestDir/AndroidManifest.xml"
+            def link = manifestFilePath
+            link = link.replace("merged_manifests", "bundle_manifest")
+
+            try {
+                writeManifest(manifestFilePath, placeholders)
+                writeManifest(link, placeholders)
+            } catch (Exception e) {
+                println "Error while writing deep link into manifest"
+            }
+
+        }
+    }
+}
+
+def writeManifest(String manifestPath, HashMap placeholders) {
+    def manifestContent = file(manifestPath).getText()
+    placeholders.each { key, value ->
+        if (key.equals("deepLinks_manifestPlaceholder")) {
+            Pattern pattern = Pattern.compile(Pattern.quote("deepLinks_manifestPlaceholder"), Pattern.DOTALL);
+            manifestContent = pattern.matcher(manifestContent).replaceAll(value);
+        }
+    }
+    file(manifestPath).write(manifestContent)
+}
