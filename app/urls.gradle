@@ -1,0 +1,16 @@
+ext {
+    urlList = [
+            "www.xyz.in",
+            "www.xyz1.in",
+            "www.xyz2.in",
+            "www.xyz3.in",
+            "www.xyz4.in",
+            "www.xyz5.in",
+            "www.xyz6.in",
+            "www.xyz7.in"
+    ]
+
+    listOfDeepLinkUrls = new ArrayList<String>()
+    listOfDeepLinkUrls.add("/home")
+    locales = ["en", "fr"]
+}
